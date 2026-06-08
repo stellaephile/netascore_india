@@ -180,8 +180,52 @@ class WaterImporter(DbStep):
         # import water
         h.logBeginTask('import water')
         if db.handle_conflicting_output_tables(['water'], schema):
-            import_step.import_geopackage(db.connection_string_old, os.path.join(directory, settings['filename']), schema, 
+            import_step.import_geopackage(db.connection_string_old, os.path.join(directory, settings['filename']), schema,
                 table='water', target_srid=GlobalSettings.get_target_srid(), geometry_types=['LINESTRING', 'POLYGON'])
+        h.logEndTask()
+
+        # close database connection
+        h.log('close database connection')
+        db.close()
+
+
+class ShadeCoverageImporter(DbStep):
+    def run_step(self, settings: dict):
+        """
+        Imports a Meta/WRI 1m canopy height GeoTIFF into PostGIS as a raster table.
+
+        Expected settings keys:
+          filename  - path to the GeoTIFF relative to GlobalSettings.data_directory
+          srid      - EPSG code of the raster CRS (e.g. 32643 for UTM 43N / Bengaluru)
+
+        Pixel values: 0–31 metres; 0 = no canopy (valid data, not NoData).
+        The imported table is: <data_schema>.shade_coverage_raster
+        It is consumed by attributes_step to derive the shade_coverage column.
+
+        Data source: Meta/WRI 1m Global Canopy Height Maps (Tolan et al. 2024)
+        GEE collection: projects/sat-io/open-datasets/facebook/meta-canopy-height
+        """
+        h.info('importing shade coverage raster (Meta/WRI canopy height):')
+        h.log(f"using settings: {str(settings)}")
+
+        schema = self.db_settings.entities.data_schema
+        directory = GlobalSettings.data_directory
+
+        # open database connection
+        h.info('open database connection')
+        db = PostgresConnection.from_settings_object(self.db_settings)
+        db.init_extensions_and_schema(schema)
+
+        # import shade coverage raster — same pattern as DemImporter
+        h.logBeginTask('import shade coverage raster')
+        if db.handle_conflicting_output_tables(['shade_coverage_raster'], schema):
+            import_raster(
+                db.connection_string,
+                os.path.join(directory, settings['filename']),
+                schema,
+                table='shade_coverage_raster',
+                input_srid=settings.get('srid', 0)
+            )
         h.logEndTask()
 
         # close database connection
@@ -206,10 +250,15 @@ def create_optional_importer(db_settings: DbSettings, import_type: str):
         return GreennessImporter(db_settings)
     if import_type == 'water':
         return WaterImporter(db_settings)
+    if import_type == 'shade_coverage':
+        return ShadeCoverageImporter(db_settings)
     raise NotImplementedError(f"import type '{import_type}' not implemented")
 
 
 def run_optional_importers(db_settings: DbSettings, optional_importer_settings: dict):
     for import_type, settings in optional_importer_settings.items():
+        if settings is None:
+            h.log(f"optional '{import_type}': no settings provided, skipping.")
+            continue
         optional_importer = create_optional_importer(db_settings, import_type)
         optional_importer.run_step(settings)

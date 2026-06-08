@@ -1,0 +1,113 @@
+# =============================================================================
+# profile_bike_india.yml
+# India-adapted bikeability profile — MAHP-calibrated weights
+# Survey: KoboToolbox MAHP instrument, urban planning experts, Indian cities
+# Reference: SOW_CONTEXT.md — Phase 1 weight calibration
+#
+# Weights are raw MAHP outputs (sum ≈ 1.0); NetAScore normalises internally.
+# =============================================================================
+
+name: bike_india
+mode: bike
+
+indicators:
+
+  - name: pavement
+    weight: 0.1319
+    data_col: pavement
+    # Rank 1: surface quality — primary barrier for cyclists in India.
+    # Maps to the existing 'pavement' attribute (surface type from OSM tags).
+    value_mappings:
+      - { from: 0, to: 0.0 }   # unpaved / missing
+      - { from: 1, to: 0.3 }   # poor / gravel / cobblestone
+      - { from: 2, to: 0.6 }   # asphalt, worn / concrete
+      - { from: 3, to: 1.0 }   # asphalt, good condition
+
+  - name: road_category
+    weight: 0.1238
+    data_col: road_category
+    # Rank 2: traffic environment dominates where dedicated cycling infrastructure is absent
+    value_mappings:
+      - { from: 1, to: 0.0 }   # motorway / trunk
+      - { from: 2, to: 0.2 }   # primary
+      - { from: 3, to: 0.5 }   # secondary
+      - { from: 4, to: 0.8 }   # tertiary / residential
+      - { from: 5, to: 1.0 }   # living street / path / cycleway
+
+  - name: max_speed
+    weight: 0.1217
+    data_col: max_speed
+    # Rank 3: lower speed = better for cyclists
+    value_mappings:
+      - { from: 0,   to: 1.0 }
+      - { from: 30,  to: 0.8 }
+      - { from: 50,  to: 0.5 }
+      - { from: 70,  to: 0.2 }
+      - { from: 100, to: 0.0 }
+
+  - name: width
+    weight: 0.1173
+    data_col: width
+    # Rank 4
+    value_mappings:
+      - { from: 0.0, to: 0.0 }
+      - { from: 3.0, to: 0.5 }
+      - { from: 6.0, to: 1.0 }
+
+  - name: bicycle_infrastructure
+    weight: 0.1055
+    data_col: bicycle_infrastructure
+    # Rank 5: weight reduced vs. default model (was rank 1) — OSM tagging gap means
+    # this indicator is absent on 99.8% of segments; expert survey places it 5th,
+    # acknowledging importance without over-weighting an informationally inert field.
+    value_mappings:
+      - { from: 0, to: 0.0 }   # no infrastructure
+      - { from: 1, to: 0.5 }   # shared / advisory lane
+      - { from: 2, to: 1.0 }   # dedicated cycle track
+
+  - name: gradient
+    weight: 0.0904
+    data_col: gradient
+    # Rank 6: steeper = worse for cycling
+    value_mappings:
+      - { from: 0,  to: 1.0 }
+      - { from: 3,  to: 0.8 }
+      - { from: 6,  to: 0.5 }
+      - { from: 10, to: 0.2 }
+      - { from: 15, to: 0.0 }
+
+  - name: shade_coverage
+    weight: 0.0892
+    data_col: shade_coverage
+    # Rank 7 (new indicator): thermal comfort — shade coverage is a top factor
+    # for cycling willingness in Indian climate (Arijit Soni, MyByks consultation).
+    # shade_coverage is already 0–1 (height-weighted, 10m buffer).
+    # Requires shade_coverage_raster imported via ShadeCoverageImporter optional step.
+    value_mappings:
+      - { from: 0.0, to: 0.0 }
+      - { from: 1.0, to: 1.0 }
+
+  - name: greenness
+    weight: 0.0890
+    data_col: greenness
+    # Rank 8
+    value_mappings:
+      - { from: 0.0, to: 0.0 }
+      - { from: 1.0, to: 1.0 }
+
+  - name: facilities
+    weight: 0.0794
+    data_col: facilities
+    # Rank 9
+    value_mappings:
+      - { from: 0, to: 0.0 }
+      - { from: 1, to: 0.6 }
+      - { from: 2, to: 1.0 }
+
+  - name: water
+    weight: 0.0519
+    data_col: water
+    # Rank 10
+    value_mappings:
+      - { from: 0, to: 0.0 }
+      - { from: 1, to: 1.0 }

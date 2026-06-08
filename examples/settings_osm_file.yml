@@ -17,6 +17,13 @@ optional:
   noise:
     filename: noise.gpkg # GeoPackage
     # column_noise: noise # TODO: set from settings file
+  # shade_coverage: Meta/WRI 1m Global Canopy Height — export from GEE, clip to city extent
+  # Pixel values: 0–31 metres; 0 = no canopy (valid, not NoData). Single-band GeoTIFF.
+  # Source: https://gee-community-catalog.org/projects/meta_trees/
+  # Citation: Tolan et al. (2024), Remote Sensing of Environment, 300, 113888
+  # shade_coverage:
+  #   filename: bengaluru_canopy_height.tif
+  #   srid: 32643  # UTM Zone 43N for Bengaluru; adjust per city
 index:
   compute_explanation: False
 profiles:
