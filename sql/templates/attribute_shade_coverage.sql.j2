@@ -20,11 +20,21 @@
 ALTER TABLE {{ edge_table | sqlsafe }}
     ADD COLUMN IF NOT EXISTS shade_coverage double precision;
 
-UPDATE {{ edge_table | sqlsafe }} e
+-- network_edge_attributes holds only edge_id; geometry lives on network_edge.
+--
+-- CRS handling: edges are in the target SRID (metric, e.g. UTM 32643).
+-- The raster may be in a different CRS (commonly 4326 from GEE exports).
+-- Strategy:
+--   1. Buffer edge in metres (native UTM) → accurate 10 m corridor
+--   2. ST_Transform the buffer to the raster SRID for all spatial raster ops
+--   3. Pixel geometries come back in raster CRS; compare against raster-CRS buffer
+-- This avoids reprojecting the raster and works regardless of raster CRS.
+
+UPDATE {{ edge_table | sqlsafe }} ea
 SET shade_coverage = sub.score
 FROM (
     SELECT
-        e.edge_id,
+        ne.edge_id,
         AVG(
             CASE
                 WHEN pixels.val < 3   THEN 0.0
@@ -34,18 +44,29 @@ FROM (
                 ELSE                       1.0
             END
         ) AS score
-    FROM {{ edge_table | sqlsafe }} e
+    FROM {{ network_edge_table | sqlsafe }} ne
+    -- Pre-compute both the metric buffer (for accurate 10 m distance)
+    -- and the raster-CRS buffer (for all spatial raster operations)
+    CROSS JOIN LATERAL (
+        SELECT
+            ST_Buffer(ne.geom, 10) AS buf_metric,
+            ST_Transform(
+                ST_Buffer(ne.geom, 10),
+                (SELECT ST_SRID(rast) FROM {{ schema | sqlsafe }}.shade_coverage_raster LIMIT 1)
+            ) AS buf_raster_crs
+    ) AS b
     JOIN {{ schema | sqlsafe }}.shade_coverage_raster r
-      ON ST_Intersects(r.rast, ST_Buffer(e.geom, 10))
+      ON ST_Intersects(r.rast, b.buf_raster_crs)
     CROSS JOIN LATERAL (
         SELECT (ST_PixelAsPoints(
-                    ST_Clip(r.rast, 1, ST_Buffer(e.geom, 10), 0, TRUE)
+                    ST_Clip(r.rast, 1, b.buf_raster_crs, 0, TRUE)
                 )).*
     ) AS pixels(geom, val, x, y)
-    WHERE ST_Within(pixels.geom, ST_Buffer(e.geom, 10))
-    GROUP BY e.edge_id
+    -- Pixel centroids are in raster CRS; compare against raster-CRS buffer
+    WHERE ST_Within(pixels.geom, b.buf_raster_crs)
+    GROUP BY ne.edge_id
 ) sub
-WHERE e.edge_id = sub.edge_id;
+WHERE ea.edge_id = sub.edge_id;
 
 -- Edges with no raster coverage get 0 (no canopy data → assume no shade)
 UPDATE {{ edge_table | sqlsafe }}

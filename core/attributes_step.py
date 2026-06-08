@@ -107,8 +107,9 @@ class OsmAttributesStep(DbStep):
             db.execute_template_sql_from_file(
                 "attribute_shade_coverage",
                 {
-                    'edge_table': f"{schema}.network_edge_attributes",
-                    'schema': data_schema,
+                    'edge_table':         f"{schema}.network_edge_attributes",
+                    'network_edge_table': f"{schema}.network_edge",
+                    'schema':             data_schema,
                 }
             )
             h.logEndTask()
