@@ -97,6 +97,25 @@ class OsmAttributesStep(DbStep):
             db.commit()
         h.logEndTask()
 
+        # --- shade_coverage (optional) ----------------------------------------
+        # Runs only when the shade_coverage_raster table exists in the data schema,
+        # i.e. the ShadeCoverageImporter optional step was executed beforehand.
+        # Source: Meta/WRI 1m Global Canopy Height (Tolan et al. 2024)
+        data_schema = self.db_settings.entities.data_schema
+        if db.use_if_exists('shade_coverage_raster', data_schema):
+            h.logBeginTask('derive shade_coverage attribute')
+            db.execute_template_sql_from_file(
+                "attribute_shade_coverage",
+                {
+                    'edge_table':         f"{schema}.network_edge_attributes",
+                    'network_edge_table': f"{schema}.network_edge",
+                    'schema':             data_schema,
+                }
+            )
+            h.logEndTask()
+        else:
+            h.log('shade_coverage_raster not found — skipping shade_coverage attribute')
+
         # close database connection
         h.log('closing database connection')
         db.close()

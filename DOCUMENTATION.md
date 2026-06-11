@@ -1,4 +1,4 @@
-# NetAScore — Complete Technical Documentation
+# NetAScore - Complete Technical Documentation
 
 **NetAScore (Network Assessment Score Toolbox)** is an open-source Python framework for computing segment-scale bikeability and walkability indices from road network data. It ingests spatial data from OpenStreetMap (OSM) or the Austrian GIP dataset, enriches each road segment with transport-relevant attributes, applies configurable mode profiles to compute composite routing indices, and exports the final assessed network as a GeoPackage.
 
@@ -9,11 +9,11 @@
 1. [Project Overview](#1-project-overview)
 2. [Repository Structure](#2-repository-structure)
 3. [Architecture & Data Flow](#3-architecture--data-flow)
-4. [Entry Point — `generate_index.py`](#4-entry-point--generate_indexpy)
-5. [Settings System — `settings.py`](#5-settings-system--settingspy)
+4. [Entry Point - `generate_index.py`](#4-entry-point--generate_indexpy)
+5. [Settings System - `settings.py`](#5-settings-system--settingspy)
 6. [Toolbox](#6-toolbox)
-   - [helper.py — Logging & Utilities](#helperpy--logging--utilities)
-   - [dbhelper.py — Database Abstraction](#dbhelperpy--database-abstraction)
+   - [helper.py - Logging & Utilities](#helperpy--logging--utilities)
+   - [dbhelper.py - Database Abstraction](#dbhelperpy--database-abstraction)
 7. [Core Pipeline Steps](#7-core-pipeline-steps)
    - [Step 1: Import](#step-1-import--core/import_steppy)
    - [Step 2: Optional Imports](#step-2-optional-imports--core/optional_steppy)
@@ -36,8 +36,8 @@
 
 NetAScore computes two primary outputs per road segment edge:
 
-- **Bikeability** (`index_bike_ft`, `index_bike_tf`) — suitability score for cycling
-- **Walkability** (`index_walk_ft`, `index_walk_tf`) — suitability score for walking
+- **Bikeability** (`index_bike_ft`, `index_bike_tf`) - suitability score for cycling
+- **Walkability** (`index_walk_ft`, `index_walk_tf`) - suitability score for walking
 
 Index values range from `0` (unsuitable) to `1` (well-suited). The `_ft` and `_tf` suffixes indicate travel direction: *from-node to to-node* and *to-node to from-node* respectively, enabling directional routing.
 
@@ -49,7 +49,7 @@ The system is designed to be data-source agnostic and profile-driven. The same p
 
 ```
 netascore/
-├── generate_index.py          # Main entry point — CLI, pipeline orchestration
+├── generate_index.py          # Main entry point - CLI, pipeline orchestration
 ├── settings.py                # Global/DB settings dataclasses and enums
 ├── requirements.txt           # Python dependencies
 ├── Dockerfile                 # Docker image definition
@@ -66,7 +66,7 @@ netascore/
 │
 ├── toolbox/
 │   ├── helper.py              # Logging, timing, YAML-safe string utilities
-│   └── dbhelper.py            # PostgresConnection — all DB interaction
+│   └── dbhelper.py            # PostgresConnection - all DB interaction
 │
 ├── sql/
 │   ├── templates/             # Jinja2 SQL templates (.sql.j2)
@@ -162,7 +162,7 @@ All state lives in PostgreSQL. Each step reads from and writes to named tables. 
 
 ---
 
-## 4. Entry Point — `generate_index.py`
+## 4. Entry Point - `generate_index.py`
 
 The single entry point for the entire pipeline. It is invoked as:
 
@@ -174,12 +174,12 @@ Inside Docker, the image `ENTRYPOINT` is `python ./generate_index.py`, so the se
 
 ### What it does
 
-1. **Parse CLI arguments** — reads the settings file path, optional `--skip` list, and log level.
-2. **Load YAML settings** — parses the settings file with `yaml.safe_load`.
-3. **Apply global settings** — sets `GlobalSettings.custom_srid` and `GlobalSettings.case_id` from the `global` section if provided. The `case_id` is sanitised to alphanumeric + underscore only.
-4. **Build `DbSettings`** — reads database connection parameters, falling back to `DB_USERNAME` and `DB_PASSWORD` environment variables if not in the YAML.
-5. **Validate required sections** — before running anything, checks that `import`, `export`, and `profiles` sections exist (unless the corresponding steps are skipped).
-6. **Execute steps in order** — calls each step's factory function and `run_step()` method unless that step is in the `--skip` list.
+1. **Parse CLI arguments** - reads the settings file path, optional `--skip` list, and log level.
+2. **Load YAML settings** - parses the settings file with `yaml.safe_load`.
+3. **Apply global settings** - sets `GlobalSettings.custom_srid` and `GlobalSettings.case_id` from the `global` section if provided. The `case_id` is sanitised to alphanumeric + underscore only.
+4. **Build `DbSettings`** - reads database connection parameters, falling back to `DB_USERNAME` and `DB_PASSWORD` environment variables if not in the YAML.
+5. **Validate required sections** - before running anything, checks that `import`, `export`, and `profiles` sections exist (unless the corresponding steps are skipped).
+6. **Execute steps in order** - calls each step's factory function and `run_step()` method unless that step is in the `--skip` list.
 
 ### Step skipping
 
@@ -200,7 +200,7 @@ python generate_index.py settings.yml --skip import optional network attributes
 
 ---
 
-## 5. Settings System — `settings.py`
+## 5. Settings System - `settings.py`
 
 ### `InputType` (Enum)
 
@@ -251,7 +251,7 @@ This means each `case_id` gets its own PostgreSQL schema for network/index table
 
 ## 6. Toolbox
 
-### `helper.py` — Logging & Utilities
+### `helper.py` - Logging & Utilities
 
 **Logging functions:**
 
@@ -262,27 +262,27 @@ This means each `case_id` gets its own PostgreSQL schema for network/index table
 | `log(msg, level)` | any | General log with timestamp |
 | `debugLog(msg)` | 4 | Debug-only output |
 | `logBeginTask(s)` | 2 | Prints task header + starts timer |
-| `logEndTask()` | — | Prints duration since `logBeginTask` |
+| `logEndTask()` | - | Prints duration since `logBeginTask` |
 
 All output includes elapsed time since process start (format: `H:MM:SS`). Task timing uses `time.perf_counter` for precision. An `atexit` handler prints total run time on exit.
 
 **Validation helpers:**
 
-- `require_keys(settings, keys, error_message)` — calls `sys.exit(1)` if any key is missing from the dict
-- `has_keys(settings, keys)` — returns bool, logs missing keys at debug level
-- `has_any_key(settings, keys)` — returns True if at least one key is present
+- `require_keys(settings, keys, error_message)` - calls `sys.exit(1)` if any key is missing from the dict
+- `has_keys(settings, keys)` - returns bool, logs missing keys at debug level
+- `has_any_key(settings, keys)` - returns True if at least one key is present
 
 **SQL-safe string utilities** (used when building dynamic SQL to prevent injection):
 
-- `get_safe_name(value)` — strips all non-alphanumeric/underscore characters
-- `get_safe_string(value)` — allows alphanumeric, `_`, `.`, `:`, space, `-`
-- `str_to_numeric(value)` — extracts numeric portion from a string; returns `int` or `float`
-- `str_is_numeric_only(value)` — returns True if string contains only digits/decimal/minus
-- `is_numeric(value)` — True for `int` or `float` type
+- `get_safe_name(value)` - strips all non-alphanumeric/underscore characters
+- `get_safe_string(value)` - allows alphanumeric, `_`, `.`, `:`, space, `-`
+- `str_to_numeric(value)` - extracts numeric portion from a string; returns `int` or `float`
+- `str_is_numeric_only(value)` - returns True if string contains only digits/decimal/minus
+- `is_numeric(value)` - True for `int` or `float` type
 
 ---
 
-### `dbhelper.py` — Database Abstraction
+### `dbhelper.py` - Database Abstraction
 
 `PostgresConnection` wraps `psycopg2` and provides a high-level interface used by every pipeline step.
 
@@ -299,8 +299,8 @@ Connection uses keepalives (`keepalives_idle=5`, `keepalives_interval=2`, `keepa
 
 **Two connection string formats** are maintained for compatibility with different tools:
 
-- `connection_string` — URL format for `psycopg2` and `raster2pgsql`: `postgresql://user:pw@host:port/db`
-- `connection_string_old` — key=value format for `ogr2ogr` and legacy tools: `dbname='...' host='...'...`
+- `connection_string` - URL format for `psycopg2` and `raster2pgsql`: `postgresql://user:pw@host:port/db`
+- `connection_string_old` - key=value format for `ogr2ogr` and legacy tools: `dbname='...' host='...'...`
 
 **Schema and extension management:**
 
@@ -334,12 +334,12 @@ Templates use `{{ param | sqlsafe }}` for identifiers (schema names, table names
 
 **Other utilities:**
 
-- `db.exists(entity, schema)` — checks via `to_regclass()`
-- `db.use_if_exists(entity, schema)` — returns the identifier string if it exists, else `None`
-- `db.column_exists(column, schema, table)` — checks `information_schema.columns`
-- `db.vacuum(table)` — switches to autocommit mode (required for `VACUUM`), runs `VACUUM FULL ANALYZE`, resets
-- `db.geom_reproject(table, geomType, srid)` — in-place `ST_Transform` via `ALTER TABLE`
-- `db.query_one(sql, vars)` / `db.query_all(sql, vars)` — execute + fetch shorthands
+- `db.exists(entity, schema)` - checks via `to_regclass()`
+- `db.use_if_exists(entity, schema)` - returns the identifier string if it exists, else `None`
+- `db.column_exists(column, schema, table)` - checks `information_schema.columns`
+- `db.vacuum(table)` - switches to autocommit mode (required for `VACUUM`), runs `VACUUM FULL ANALYZE`, resets
+- `db.geom_reproject(table, geomType, srid)` - in-place `ST_Transform` via `ALTER TABLE`
+- `db.query_one(sql, vars)` / `db.query_all(sql, vars)` - execute + fetch shorthands
 
 ---
 
@@ -362,18 +362,18 @@ Each module exposes a factory function that selects the GIP or OSM implementatio
 
 ---
 
-### Step 1: Import — `core/import_step.py`
+### Step 1: Import - `core/import_step.py`
 
 Ingests raw source data into PostgreSQL. This is the most complex step, with very different logic for the two data sources.
 
 #### Module-level functions
 
-**`create_csv(file_txt)`** — Converts a GIP `.txt` file to `.csv`. GIP files use a custom line-prefix format:
+**`create_csv(file_txt)`** - Converts a GIP `.txt` file to `.csv`. GIP files use a custom line-prefix format:
 - Lines starting with `tbl;` open a new output file
 - Lines with `atr;` become the CSV header
 - Lines with `rec;` become data rows (with empty-string cleaning)
 
-**`create_sql(file_txt)`** — Parses a GIP `.txt` file and generates a `CREATE TABLE` SQL statement. Maps GIP type strings to PostgreSQL types:
+**`create_sql(file_txt)`** - Parses a GIP `.txt` file and generates a `CREATE TABLE` SQL statement. Maps GIP type strings to PostgreSQL types:
 
 | GIP type | PostgreSQL type |
 |---|---|
@@ -386,16 +386,16 @@ Ingests raw source data into PostgreSQL. This is the most complex step, with ver
 
 Reserved SQL keyword `offset` is renamed to `offset_`.
 
-**`import_csv(connection_string, path, schema, table)`** — Runs `psql \copy` for bulk CSV loading (semicolon-delimited, UTF-8, with header).
+**`import_csv(connection_string, path, schema, table)`** - Runs `psql \copy` for bulk CSV loading (semicolon-delimited, UTF-8, with header).
 
-**`import_geopackage(connection_string, path, schema, table, ...)`** — Uses `ogr2ogr` to import one or more layers from a GeoPackage into PostGIS. Supports:
-- `fid` — FID column name
-- `target_srid` — reprojects on import
-- `layers` — which layers to import (defaults to all)
-- `attributes` — column selection
-- `geometry_types` — filters features by geometry type using `ST_GeometryType()` in a `-where` clause
+**`import_geopackage(connection_string, path, schema, table, ...)`** - Uses `ogr2ogr` to import one or more layers from a GeoPackage into PostGIS. Supports:
+- `fid` - FID column name
+- `target_srid` - reprojects on import
+- `layers` - which layers to import (defaults to all)
+- `attributes` - column selection
+- `geometry_types` - filters features by geometry type using `ST_GeometryType()` in a `-where` clause
 
-**`import_osm(connection_string, path, path_style, schema, prefix)`** — Runs `osm2pgsql` with `--slim --hstore --latlong` and the provided style file. Creates `osm_point`, `osm_line`, `osm_polygon` tables.
+**`import_osm(connection_string, path, path_style, schema, prefix)`** - Runs `osm2pgsql` with `--slim --hstore --latlong` and the provided style file. Creates `osm_point`, `osm_line`, `osm_polygon` tables.
 
 #### `GipImporter`
 
@@ -423,7 +423,7 @@ Imports OpenStreetMap data, either from disk or downloaded live via the Overpass
 
 1. Creates an `aoi` table if absent (columns: `id`, `name`, `geom`, `srid`)
 2. Queries Overpass API for an administrative boundary polygon matching `place_name`
-3. Handles multiple results — uses first, or prompts interactively if `interactive: True`
+3. Handles multiple results - uses first, or prompts interactively if `interactive: True`
 4. Stores AOI geometry in the `aoi` table
 5. Computes the target SRID from the AOI centroid's UTM zone (via `determine_utmzone` SQL function) or uses `global.target_srid`
 6. Expands the AOI bounding box by `buffer` metres (default 500)
@@ -447,11 +447,11 @@ All derived tables are reprojected to `target_srid` and spatially indexed (`USIN
 
 ---
 
-### Step 2: Optional Imports — `core/optional_step.py`
+### Step 2: Optional Imports - `core/optional_step.py`
 
 Imports supplementary datasets that enrich network attributes but are not required for a basic run.
 
-**`import_raster(connection_string, path, schema, table, input_srid)`** — Pipes `raster2pgsql` into `psql`. Imports without reprojection; the network geometry is reprojected to the DEM's CRS temporarily during attribute calculation, not the other way round.
+**`import_raster(connection_string, path, schema, table, input_srid)`** - Pipes `raster2pgsql` into `psql`. Imports without reprojection; the network geometry is reprojected to the DEM's CRS temporarily during attribute calculation, not the other way round.
 
 | Importer class | Dataset | Format | Notes |
 |---|---|---|---|
@@ -467,7 +467,7 @@ Imports supplementary datasets that enrich network attributes but are not requir
 
 ---
 
-### Step 3: Network Construction — `core/network_step.py`
+### Step 3: Network Construction - `core/network_step.py`
 
 Transforms raw imported data into a topologically correct, routable network graph: `network_edge` and `network_node` tables.
 
@@ -500,7 +500,7 @@ Both steps create:
 
 ---
 
-### Step 4: Attribute Calculation — `core/attributes_step.py`
+### Step 4: Attribute Calculation - `core/attributes_step.py`
 
 Computes all transport-relevant indicators per edge/node and writes to `network_edge_attributes`, `network_node_attributes`, and `network_edge_export`.
 
@@ -521,18 +521,18 @@ Both GIP and OSM attribute steps accept the same set of optional enrichment tabl
 #### `GipAttributesStep` → `gip_attributes.sql.j2`
 
 Registers three SQL functions first:
-- `gip_calculate_bicycle_infrastructure` — maps GIP `bikeenvironment`/`bikefeature` flags to `bicycle_infrastructure` categories
-- `gip_calculate_pedestrian_infrastructure` — maps GIP attributes to `pedestrian_infrastructure` categories
-- `gip_calculate_road_category` — maps GIP `funcroadclass`/`streetcat` to road category strings
+- `gip_calculate_bicycle_infrastructure` - maps GIP `bikeenvironment`/`bikefeature` flags to `bicycle_infrastructure` categories
+- `gip_calculate_pedestrian_infrastructure` - maps GIP attributes to `pedestrian_infrastructure` categories
+- `gip_calculate_road_category` - maps GIP `funcroadclass`/`streetcat` to road category strings
 
-**Note:** If a DEM is provided, a warning is emitted and it is ignored — GIP contains its own elevation data.
+**Note:** If a DEM is provided, a warning is emitted and it is ignored - GIP contains its own elevation data.
 
 #### `OsmAttributesStep` → `osm_attributes.sql.j2`
 
 Registers three SQL functions:
-- `osm_calculate_access_bicycle` — interprets `bicycle`, `foot`, `access`, `cycleway`, `highway` tags + directionality
-- `osm_calculate_access_car` — interprets `motor_vehicle`, `access`, `oneway` tags + roundabout logic
-- `osm_calculate_access_pedestrian` — interprets `foot`, `access`, `highway` tags + directionality
+- `osm_calculate_access_bicycle` - interprets `bicycle`, `foot`, `access`, `cycleway`, `highway` tags + directionality
+- `osm_calculate_access_car` - interprets `motor_vehicle`, `access`, `oneway` tags + roundabout logic
+- `osm_calculate_access_pedestrian` - interprets `foot`, `access`, `highway` tags + directionality
 
 These functions return boolean `_ft`/`_tf` access flags. The OSM access logic is significantly more complex than GIP due to OSM's tag variety.
 
@@ -546,7 +546,7 @@ This is what the index step reads.
 
 ---
 
-### Step 5: Index Generation — `core/index_step.py`
+### Step 5: Index Generation - `core/index_step.py`
 
 The most algorithmically complex step. Translates YAML mode profile definitions into PostgreSQL PL/pgSQL functions at runtime, then uses those functions to compute composite routing indices.
 
@@ -557,9 +557,9 @@ profiles = load_profiles(base_path, profile_definitions)
 ```
 
 `ModeProfile` reads a YAML profile file and parses:
-- `profile_name` — used in output column names (e.g. `index_bike_ft`)
-- `access_car/bike/walk` — filter flags from `filter_access_*` keys; if none set, all modes enabled
-- `profile` — the full parsed YAML dict (weights, overrides, indicator_mapping)
+- `profile_name` - used in output column names (e.g. `index_bike_ft`)
+- `access_car/bike/walk` - filter flags from `filter_access_*` keys; if none set, all modes enabled
+- `profile` - the full parsed YAML dict (weights, overrides, indicator_mapping)
 
 #### YAML → SQL translation
 
@@ -581,11 +581,11 @@ END
 ```
 
 Supports:
-- **`mapping`** — exact equality checks. String, numeric, boolean, and list values `{v1,v2}` are all handled. Numeric lists get `IN (n1, n2)`; string lists get `IN ('s1', 's2')`.
-- **`classes`** — range-based. Keys use operator prefixes (`g`=`>`, `ge`=`>=`, `l`=`<`, `le`=`<=`, `e`=`=`, `ne`=`<>`) prepended to the threshold value (e.g. `ge50: 0.6` → `WHEN indicator >= 50 THEN 0.6`).
-- **Nested dicts** — the assigned value can itself be another indicator block, producing a nested `CASE...END`.
-- **`NULL` key** — generates `WHEN indicator IS NULL THEN value`.
-- **`_default_` key** — generates `ELSE value`.
+- **`mapping`** - exact equality checks. String, numeric, boolean, and list values `{v1,v2}` are all handled. Numeric lists get `IN (n1, n2)`; string lists get `IN ('s1', 's2')`.
+- **`classes`** - range-based. Keys use operator prefixes (`g`=`>`, `ge`=`>=`, `l`=`<`, `le`=`<=`, `e`=`=`, `ne`=`<>`) prepended to the threshold value (e.g. `ge50: 0.6` → `WHEN indicator >= 50 THEN 0.6`).
+- **Nested dicts** - the assigned value can itself be another indicator block, producing a nested `CASE...END`.
+- **`NULL` key** - generates `WHEN indicator IS NULL THEN value`.
+- **`_default_` key** - generates `ELSE value`.
 
 All string values are passed through `get_safe_string()` to prevent SQL injection.
 
@@ -607,8 +607,8 @@ This computes the normalised weighted contribution of each indicator to the comp
 **`_build_sql_overrides(overrides_yml)`**
 
 Generates override blocks that can either:
-- Set specific indicator **weights** (type `weight`) — useful for penalising combinations like steep + unpaved
-- Set the **composite index** directly (type `index`) and return early — useful for fixed-score edge cases
+- Set specific indicator **weights** (type `weight`) - useful for penalising combinations like steep + unpaved
+- Set the **composite index** directly (type `index`) and return early - useful for fixed-score edge cases
 
 Example: for the walk profile, when `pedestrian_infrastructure = 'sidewalk'` AND `road_category IN ('primary', 'secondary')`, the index is fixed to `0.2` without running the weighted sum.
 
@@ -631,9 +631,9 @@ For each profile:
 2. The `index.sql.j2` template is executed per profile, using `LATERAL calculate_index(...)` to compute both `_ft` and `_tf` index values for every edge in a single pass.
 
 3. Columns added to `network_edge_index`:
-   - `index_<profile>_ft` / `_tf` — the composite index value (0–1)
-   - `index_<profile>_ft_robustness` / `_tf_robustness` — fraction of non-null indicator weights (data completeness indicator)
-   - `index_<profile>_ft_explanation` / `_tf_explanation` — JSON array of per-indicator weighted contributions (only if `compute_explanation: True`)
+   - `index_<profile>_ft` / `_tf` - the composite index value (0–1)
+   - `index_<profile>_ft_robustness` / `_tf_robustness` - fraction of non-null indicator weights (data completeness indicator)
+   - `index_<profile>_ft_explanation` / `_tf_explanation` - JSON array of per-indicator weighted contributions (only if `compute_explanation: True`)
 
 4. After all profiles are computed, `export.sql.j2` joins `network_edge_export`, `network_edge_attributes`, and `network_edge_index` into `export_edge`, and joins `network_node` with `network_node_attributes` into `export_node`.
 
@@ -641,7 +641,7 @@ For each profile:
 
 ---
 
-### Step 6: Export — `core/export_step.py`
+### Step 6: Export - `core/export_step.py`
 
 Exports the final network tables to a GeoPackage file using `ogr2ogr`.
 
@@ -668,8 +668,8 @@ ogr2ogr -f "GPKG" output.gpkg PG:"..." -lco FID=edge_id -lco GEOMETRY_NAME=geom 
 
 All templates use JinjaSql via `dbhelper.execute_template_sql_from_file()`. Parameters passed as Python dicts are rendered into the template, with two kinds of substitution:
 
-- `{{ param | sqlsafe }}` — unsafe: value is inserted directly into SQL string. Used for schema names, table names, SQL fragments (indicator mapping SQL). Only safe because all such values have been sanitised beforehand in Python.
-- `{{ param }}` — safe: rendered to a `%(param)s` pyformat placeholder, bound by psycopg2. Used for scalar values.
+- `{{ param | sqlsafe }}` - unsafe: value is inserted directly into SQL string. Used for schema names, table names, SQL fragments (indicator mapping SQL). Only safe because all such values have been sanitised beforehand in Python.
+- `{{ param }}` - safe: rendered to a `%(param)s` pyformat placeholder, bound by psycopg2. Used for scalar values.
 
 Templates are stored in `sql/templates/` with `.sql.j2` extension.
 
@@ -680,19 +680,19 @@ Templates are stored in `sql/templates/` with `.sql.j2` extension.
 Plain SQL files in `sql/functions/` define reusable PostgreSQL functions. They are executed once at the beginning of the attributes step via `execute_sql_from_file()`.
 
 **GIP functions:**
-- `gip_calculate_road_category` — maps `funcroadclass`, `streetcat`, `formofway` to road category string
-- `gip_calculate_bicycle_infrastructure` — maps `bikeenvironment`, `bikefeature*` columns to infrastructure category
-- `gip_calculate_pedestrian_infrastructure` — maps GIP attributes to pedestrian infrastructure category
+- `gip_calculate_road_category` - maps `funcroadclass`, `streetcat`, `formofway` to road category string
+- `gip_calculate_bicycle_infrastructure` - maps `bikeenvironment`, `bikefeature*` columns to infrastructure category
+- `gip_calculate_pedestrian_infrastructure` - maps GIP attributes to pedestrian infrastructure category
 
 **OSM functions:**
-- `osm_calculate_access_car` — complex multi-tag access logic for motor vehicles, respecting directionality and one-way rules
-- `osm_calculate_access_bicycle` — access logic for cyclists including `cycleway:*` tags and contraflow rules
-- `osm_calculate_access_pedestrian` — access logic for pedestrians
-- `osm_delete_dangling_edges` — removes topological dead-end artifacts from OSM network construction
+- `osm_calculate_access_car` - complex multi-tag access logic for motor vehicles, respecting directionality and one-way rules
+- `osm_calculate_access_bicycle` - access logic for cyclists including `cycleway:*` tags and contraflow rules
+- `osm_calculate_access_pedestrian` - access logic for pedestrians
+- `osm_delete_dangling_edges` - removes topological dead-end artifacts from OSM network construction
 
 **Shared functions:**
-- `determine_utmzone` — calculates appropriate UTM SRID from a geometry centroid's longitude
-- `calculate_index.sql.j2` — the dynamic PL/pgSQL function template. Receives the indicator mapping SQL and override SQL as Jinja parameters, producing a complete function definition that is re-registered for each mode profile.
+- `determine_utmzone` - calculates appropriate UTM SRID from a geometry centroid's longitude
+- `calculate_index.sql.j2` - the dynamic PL/pgSQL function template. Receives the indicator mapping SQL and override SQL as Jinja parameters, producing a complete function definition that is re-registered for each mode profile.
 
 ---
 
@@ -733,7 +733,7 @@ indicator_mapping:  # Maps raw attribute values to [0,1] scores
 
 ### Weights
 
-Weights do not need to sum to 1 — the index computation normalises by `weights_sum` (the sum of non-null weights for indicators that have non-null data for a given edge).
+Weights do not need to sum to 1 - the index computation normalises by `weights_sum` (the sum of non-null weights for indicators that have non-null data for a given edge).
 
 `index_robustness` = `weights_sum / weights_total` represents the fraction of the configured weight that had actual data, providing a data quality/completeness indicator per edge.
 
@@ -749,7 +749,7 @@ Key weights: `pedestrian_infrastructure` (0.4), `water` (0.4), `road_category` /
 
 One override: `pedestrian_infrastructure = 'sidewalk'` on `primary` or `secondary` roads fixes the index to `0.2`, preventing sidewalks on fast roads from scoring normally via the weighted sum.
 
-The `crossings` indicator uses a nested mapping: if `crossings = 0` (no crossings nearby), the score is determined by `road_category` — no crossings on a `primary` or `secondary` road scores `0`; on a residential road scores `0.5`. This captures the danger of crossing a busy road with no dedicated crossing point.
+The `crossings` indicator uses a nested mapping: if `crossings = 0` (no crossings nearby), the score is determined by `road_category` - no crossings on a `primary` or `secondary` road scores `0`; on a residential road scores `0.5`. This captures the danger of crossing a busy road with no dedicated crossing point.
 
 ---
 
@@ -862,7 +862,7 @@ docker compose run netascore data/my_settings.yml
 
 | Service | Image | Port | Notes |
 |---|---|---|---|
-| `netascore` | `plusmobilitylab/netascore:latest` | — | Mounts `./data` into container |
+| `netascore` | `plusmobilitylab/netascore:latest` | - | Mounts `./data` into container |
 | `netascore-db` | `postgis/postgis:13-3.2` | 5433:5432 | Health check: `pg_isready` |
 
 The `netascore` service waits for `netascore-db` to pass its health check (up to 120 × 10s retries) before starting.
@@ -909,7 +909,7 @@ The Dockerfile uses `python:3.8.17-bullseye` and installs `gdal-bin`, `postgresq
 
 The final output GeoPackage contains two layers.
 
-### `edge` layer — `export_edge`
+### `edge` layer - `export_edge`
 
 A join of `network_edge_export` + `network_edge_attributes` + `network_edge_index`.
 
@@ -971,7 +971,7 @@ A join of `network_edge_export` + `network_edge_attributes` + `network_edge_inde
 
 The same columns are repeated for each additional profile (`walk`, or any custom profile name).
 
-### `node` layer — `export_node`
+### `node` layer - `export_node`
 
 | Column | Type | Description |
 |---|---|---|

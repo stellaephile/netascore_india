@@ -1,0 +1,109 @@
+# =============================================================================
+# profile_walk_india.yml
+# India-adapted walkability profile — MAHP-calibrated weights
+# Survey: KoboToolbox MAHP instrument, urban planning experts, Indian cities
+# Reference: SOW_CONTEXT.md — Phase 1 weight calibration
+#
+# Weights are raw MAHP outputs (sum ≈ 1.0); NetAScore normalises internally.
+# =============================================================================
+
+name: walk_india
+mode: walk
+
+indicators:
+
+  - name: pedestrian_infrastructure
+    weight: 0.1562
+    data_col: pedestrian_infrastructure
+    # Rank 1: primary safety/access barrier; weight reduced vs. default (0.40)
+    # to account for near-zero OSM discriminating power in Indian cities
+    value_mappings:
+      - { from: 0, to: 0.0 }   # no infrastructure
+      - { from: 1, to: 0.5 }   # partial / low-quality
+      - { from: 2, to: 1.0 }   # dedicated footpath present
+
+  - name: crossings
+    weight: 0.1303
+    data_col: crossings
+    # Rank 2: road-crossing safety is a primary pedestrian concern in Indian cities
+    value_mappings:
+      - { from: 0, to: 0.0 }
+      - { from: 1, to: 0.6 }
+      - { from: 2, to: 1.0 }
+
+  - name: width
+    weight: 0.1171
+    data_col: width
+    # Rank 3: pavement width is a real discriminator on Indian urban streets
+    value_mappings:
+      - { from: 0.0, to: 0.0 }
+      - { from: 1.5, to: 0.5 }
+      - { from: 3.0, to: 1.0 }
+
+  - name: max_speed
+    weight: 0.1137
+    data_col: max_speed
+    # Rank 4: lower speed = better for pedestrians
+    value_mappings:
+      - { from: 0,   to: 1.0 }
+      - { from: 30,  to: 0.8 }
+      - { from: 50,  to: 0.5 }
+      - { from: 70,  to: 0.2 }
+      - { from: 100, to: 0.0 }
+
+  - name: shade_coverage
+    weight: 0.0999
+    data_col: shade_coverage
+    # Rank 5 (new indicator): thermal comfort — critical for walking willingness
+    # in Indian climate. shade_coverage is already 0–1 (height-weighted, 10m buffer).
+    # Requires shade_coverage_raster imported via ShadeCoverageImporter optional step.
+    value_mappings:
+      - { from: 0.0, to: 0.0 }
+      - { from: 1.0, to: 1.0 }
+
+  - name: road_category
+    weight: 0.0898
+    data_col: road_category
+    # Rank 6
+    value_mappings:
+      - { from: 1, to: 0.0 }   # motorway / trunk
+      - { from: 2, to: 0.2 }   # primary
+      - { from: 3, to: 0.5 }   # secondary
+      - { from: 4, to: 0.8 }   # tertiary / residential
+      - { from: 5, to: 1.0 }   # living street / path
+
+  - name: facilities
+    weight: 0.0889
+    data_col: facilities
+    # Rank 7
+    value_mappings:
+      - { from: 0, to: 0.0 }
+      - { from: 1, to: 0.6 }
+      - { from: 2, to: 1.0 }
+
+  - name: greenness
+    weight: 0.0886
+    data_col: greenness
+    # Rank 8
+    value_mappings:
+      - { from: 0.0, to: 0.0 }
+      - { from: 1.0, to: 1.0 }
+
+  - name: gradient
+    weight: 0.0727
+    data_col: gradient
+    # Rank 9: steeper = worse for walking
+    value_mappings:
+      - { from: 0,  to: 1.0 }
+      - { from: 5,  to: 0.8 }
+      - { from: 10, to: 0.4 }
+      - { from: 15, to: 0.1 }
+      - { from: 20, to: 0.0 }
+
+  - name: water
+    weight: 0.0428
+    data_col: water
+    # Rank 10: lower relevance in dense urban Indian contexts
+    value_mappings:
+      - { from: 0, to: 0.0 }
+      - { from: 1, to: 1.0 }

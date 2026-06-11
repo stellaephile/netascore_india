@@ -1,0 +1,74 @@
+-- =============================================================================
+-- Attribute: shade_coverage
+-- Source:    Meta/WRI 1m Global Canopy Height (Tolan et al. 2024)
+-- Logic:     For each edge, buffer 10 m → dump pixels via ST_PixelAsPoints →
+--            apply height-weighted scoring curve → AVG across all pixels.
+--            Result is in [0, 1].
+--
+-- Scoring curve (concave — calibrated to Indian urban street trees):
+--   0  ≤ h < 3m   → 0.00   (no canopy / shrubs / saplings — no meaningful shade)
+--   3  ≤ h < 8m   → 0.30 + (h-3)  × 0.08   [0.30 – 0.70]  (young street trees)
+--   8  ≤ h < 12m  → 0.70 + (h-8)  × 0.05   [0.70 – 0.90]  (mature: neem, peepal)
+--   12 ≤ h < 18m  → 0.90 + (h-12) × 0.0167 [0.90 – 1.00]  (excellent canopy)
+--   ≥ 18m         → 1.00   (rain tree / banyan — full shade, capped)
+--
+-- Note: pixel value 0 = no canopy (valid data, not NoData).
+--       All pixels inside the buffer contribute to the average (denominator
+--       includes zeros), so both density and height drive the final score.
+-- =============================================================================
+
+ALTER TABLE {{ edge_table | sqlsafe }}
+    ADD COLUMN IF NOT EXISTS shade_coverage double precision;
+
+-- network_edge_attributes holds only edge_id; geometry lives on network_edge.
+--
+-- CRS handling: edges are in the target SRID (metric, e.g. UTM 32643).
+-- The raster may be in a different CRS (commonly 4326 from GEE exports).
+-- Strategy:
+--   1. Buffer edge in metres (native UTM) → accurate 10 m corridor
+--   2. ST_Transform the buffer to the raster SRID for all spatial raster ops
+--   3. Pixel geometries come back in raster CRS; compare against raster-CRS buffer
+-- This avoids reprojecting the raster and works regardless of raster CRS.
+
+UPDATE {{ edge_table | sqlsafe }} ea
+SET shade_coverage = sub.score
+FROM (
+    SELECT
+        ne.edge_id,
+        AVG(
+            CASE
+                WHEN pixels.val < 3   THEN 0.0
+                WHEN pixels.val < 8   THEN 0.30 + (pixels.val - 3)  * (0.40 / 5.0)
+                WHEN pixels.val < 12  THEN 0.70 + (pixels.val - 8)  * (0.20 / 4.0)
+                WHEN pixels.val < 18  THEN 0.90 + (pixels.val - 12) * (0.10 / 6.0)
+                ELSE                       1.0
+            END
+        ) AS score
+    FROM {{ network_edge_table | sqlsafe }} ne
+    -- Pre-compute both the metric buffer (for accurate 10 m distance)
+    -- and the raster-CRS buffer (for all spatial raster operations)
+    CROSS JOIN LATERAL (
+        SELECT
+            ST_Buffer(ne.geom, 10) AS buf_metric,
+            ST_Transform(
+                ST_Buffer(ne.geom, 10),
+                (SELECT ST_SRID(rast) FROM {{ schema | sqlsafe }}.shade_coverage_raster LIMIT 1)
+            ) AS buf_raster_crs
+    ) AS b
+    JOIN {{ schema | sqlsafe }}.shade_coverage_raster r
+      ON ST_Intersects(r.rast, b.buf_raster_crs)
+    CROSS JOIN LATERAL (
+        SELECT (ST_PixelAsPoints(
+                    ST_Clip(r.rast, 1, b.buf_raster_crs, 0, TRUE)
+                )).*
+    ) AS pixels(geom, val, x, y)
+    -- Pixel centroids are in raster CRS; compare against raster-CRS buffer
+    WHERE ST_Within(pixels.geom, b.buf_raster_crs)
+    GROUP BY ne.edge_id
+) sub
+WHERE ea.edge_id = sub.edge_id;
+
+-- Edges with no raster coverage get 0 (no canopy data → assume no shade)
+UPDATE {{ edge_table | sqlsafe }}
+SET shade_coverage = 0
+WHERE shade_coverage IS NULL;

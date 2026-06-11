@@ -1,84 +1,250 @@
-# NetAScore - Network Assessment Score Toolbox for Sustainable Mobility
+# NetAScore - Network Assessment Score Toolbox for Sustainable Mobility (India Adaptation)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/plus-mobilitylab/netascore/assets/82904077/762dc210-1ca5-4ead-8aeb-522e974a93fe">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/plus-mobilitylab/netascore/assets/82904077/240d09f8-a728-41ec-b0e7-8bba8fac4d38">
-  <img alt="Shows the NetAScore logo, either with light or dark background depending on the Users settings." src="https://github.com/plus-mobilitylab/netascore/assets/82904077/240d09f8-a728-41ec-b0e7-8bba8fac4d38">
+  <img alt="NetAScore logo" src="https://github.com/plus-mobilitylab/netascore/assets/82904077/240d09f8-a728-41ec-b0e7-8bba8fac4d38">
 </picture>
 
+This is an adaptation of [NetAScore](https://github.com/plus-mobilitylab/netascore) for the Indian context. It computes **bikeability** and **walkability** indicators from **OpenStreetMap (OSM)** data for cities and regions across India.
 
+NetAScore provides an automated workflow for assessing infrastructure suitability for cycling (*bikeability*) and walking (*walkability*) at the street-segment level. By editing settings files and mode profiles, assessments can be customised to reflect local conditions, infrastructure types, and user preferences relevant to the Indian urban environment.
 
-NetAScore provides a toolset and automated workflow for computing ***bikeability***, ***walkability*** and related indicators from publicly available network data sets. Currently, we provide common presets for assessing infrastructure suitability for cycling (*bikeability*) and walking (*walkability*). By editing settings files and mode profiles, additional modes or custom preferences can easily be modeled.
+For citing NetAScore, please refer to the following paper:
 
-For global coverage, we support **OpenStreetMap** data as input. Additionally, Austrian authoritative data, the **'GIP'**, can be used if you work on an area of interest within Austria. 
+Werner, C., Wendel, R., Kaziyeva, D., Stutz, P., van der Meer, L., Effertz, L., Zagel, B., & Loidl, M. (2024). NetAScore: An open and extendible software for segment-scale bikeability and walkability. *Environment and Planning B: Urban Analytics and City Science*, 0(0). [https://doi.org/10.1177/23998083241293177]
 
-For citing NetAScore, please refer to following paper which introduces the software, its objectives, as well as the data and methods used: 
-Werner, C., Wendel, R., Kaziyeva, D., Stutz, P., van der Meer, L., Effertz, L., Zagel, B., & Loidl, M. (2024). NetAScore: An open and extendible software for segment-scale bikeability and walkability. *Environment and Planning B: Urban Analytics and City Science*, 0(0). [https://doi.org/10.1177/23998083241293177]. In case you want to refer to a specific version of the software implementation, you may add the respective Zenodo reference [doi.org/10.5281/zenodo.7695369](https://doi.org/10.5281/zenodo.7695369)
+Details on the software implementation are archived at [doi.org/10.5281/zenodo.7695369](https://doi.org/10.5281/zenodo.7695369).
 
-Details regarding the **bikeability assessment method** as well as results of an **evaluation study** are provided in the following **scientific publication**, which is openly available via [doi.org/10.1016/j.jcmr.2024.100040](https://doi.org/10.1016/j.jcmr.2024.100040): Werner, C., van der Meer, L., Kaziyeva, D., Stutz, P., Wendel, R., & Loidl, M. (2024). Bikeability of road segments: An open, adjustable and extendible model. *Journal of Cycling and Micromobility Research*, *2*, 100040.
+---
 
-Details on the **walkability index** together with results from a large **evaluation study** are published Open Access: [doi.org/10.3390/su17083634](https://doi.org/10.3390/su17083634): Stutz, P., Kaziyeva, D., Traun, C., Werner, C. & Loidl, M. (2025). Walkability at Street Level: An Indicator-Based Assessment Model. *Sustainability*, *17(8)*, 3634.
+## India-specific Context
 
-**Examples:** You find example output files of NetAScore at [doi.org/10.5281/zenodo.10886961](https://doi.org/10.5281/zenodo.10886961).
+Indian cities present a distinct mobility landscape: dense mixed-use streets, high pedestrian volumes, significant cycling activity (especially for utilitarian trips), and varying infrastructure quality across urban and peri-urban areas. OSM coverage in major Indian cities (Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Pune, and others) is generally sufficient for meaningful bikeability and walkability assessments, though coverage varies by locality.
 
-You find **more information** on NetAScore in the **[wiki](https://github.com/plus-mobilitylab/netascore/wiki)**:
+### Notes on OSM Data Quality in India
 
-* [About NetAScore](https://github.com/plus-mobilitylab/netascore/wiki)
-* [Quickstart-guide](https://github.com/plus-mobilitylab/netascore/wiki/Quickstart%E2%80%90Guide)
-* [The Workflow](https://github.com/plus-mobilitylab/netascore/wiki/The-workflow)
-* [How to run the Project...](https://github.com/plus-mobilitylab/netascore/wiki/How-to-run-the-project)
-  * [...in a Docker environment](https://github.com/plus-mobilitylab/netascore/wiki/How-to-run-the-project-in-a-Docker-environment)
-  * [...directly on your Machine (Python)](https://github.com/plus-mobilitylab/netascore/wiki/Run-NetAScore-manually-with-Python)
-* [Attributes & Indicators](https://github.com/plus-mobilitylab/netascore/wiki/Attributes-and-Indicators)
-  * [Attribute derivation from OSM](https://github.com/plus-mobilitylab/netascore/wiki/Attribute-derivation-from-OSM)
-  * [Attribute derivation from GIP](https://github.com/plus-mobilitylab/netascore/wiki/Attribute-derivation-from-GIP)
-* [Configuration of the Settings](https://github.com/plus-mobilitylab/netascore/wiki/Configuration-of-the-settings)
-* [Contribute to the Project!](https://github.com/plus-mobilitylab/netascore/wiki/How-to-contribute)
-* [Requirements and Limitations](https://github.com/plus-mobilitylab/netascore/wiki/Requirements-and-Limitations)
-* [Credits and License](https://github.com/plus-mobilitylab/netascore/wiki/Credits-and-license)
+- **Major metros** (Delhi, Mumbai, Bengaluru, etc.) typically have good road network coverage. Footpath, cycle lane, and surface-type tagging is improving but may be incomplete in many areas.
+- **Tier-2 and Tier-3 cities** may have sparser attribute data. Results should be interpreted with awareness of local tagging completeness.
+- **Missing attributes** (e.g. surface type, footway presence) will cause NetAScore to fall back to defaults or mark segments as having insufficient data. We recommend reviewing the OSM data coverage for your area of interest before running an assessment.
+- You can check and improve OSM data for your area via [OpenStreetMap.org](https://www.openstreetmap.org) or tools like [MapRoulette](https://maproulette.org) and [StreetComplete](https://streetcomplete.app).
+
+### Recommended Indicators for Indian Cities
+
+The default bikeability and walkability presets work with Indian OSM data. However, the following local considerations are worth noting when interpreting or customising results:
+
+- **Footpath availability** is a key walkability driver in Indian cities and is increasingly tagged in OSM (`footway`, `sidewalk` tags).
+- **Surface quality** (`surface` tag) and **road category** (`highway` tag) are the most reliably available attributes for bikeability scoring in India.
+- **Traffic volume proxies** (derived from road category) are used where direct traffic count data is unavailable, which is typical for OSM-based assessments.
+- **Shade and greenery** along streets, important for pedestrian comfort in India's climate, can be incorporated via the `shade_coverage` optional indicator using the Meta/WRI 1m Global Canopy Height raster (see [Shade Coverage](#shade-coverage-optional) below).
+
+---
 
 ## How to get started?
 
-To get a better impression of what this toolset and workflow provides, you can quickly start with processing a sample area.
-
 ### Easy quickstart: ready-made Docker image
 
-The easiest way to get started is running the ready-made Docker image. All you need for this to succeed is a [Docker installation](https://docs.docker.com/engine/install/), running Docker Desktop and internet connection. Then, follow these two steps:
+The easiest way to get started is running the ready-made Docker image. You need [Docker](https://docs.docker.com/engine/install/) installed and running, plus an internet connection. Then follow these two steps:
 
-- download the `docker-compose.yml` file from the `examples` ([ download the raw file](https://github.com/plus-mobilitylab/netascore/blob/main/examples/docker-compose.yml)) to an empty directory
-- from within this directory, execute the following command from a terminal:
-  `docker compose run netascore`
+1. Download the `docker-compose.yml` file from the `examples` folder ([download raw file](https://github.com/plus-mobilitylab/netascore/blob/main/examples/docker-compose.yml)) into an empty directory.
+2. Open a terminal in that directory and run:
 
-Docker will download the NetAScore image and PostgreSQL database image, setup the environment for you and finally execute the workflow for Salzburg, Austria as an example case.
+```
+docker compose run netascore
+```
 
-#### What it does (example case):
+By default this runs the example case for Salzburg, Austria. **This India adaptation uses a local OSM file as input** - see the next section for how to configure and run it for your area.
 
-NetAScore first loads an area of interest by place name from Overpass Turbo API, then downloads the respective OpenStreetMap data and afterwards imports, processes and exports the final dataset. A new subdirectory named `data` will be present after successful execution. Within this folder, the assessed network is stored in `netascore_salzburg.gpkg`. It includes *bikeability* in columns `index_bike_ft` and `index_bike_tf` and *walkability* in `index_walk_ft` and `index_walk_tf`. The extensions `ft` and `tf` refer to the direction along an edge: *from-to* or *to-from* node. These values represent the assessed suitability of a segment for cycling (*bikeability*) and walking (*walkability*).
+### Running an assessment for an Indian city
 
-#### What the results look like:
+This adaptation uses **`settings_osm_file.yml`** as the primary settings file, which reads a locally downloaded OSM file rather than querying the Overpass API at runtime. This is recommended for Indian cities because:
 
-Currently, NetAScore does not come with a built-in visualization module. However, you can easily visualize the *bikeability* and *walkability* index by loading the resulting geopackage in [QGIS](https://qgis.org). Simply drag and drop the geopackage into a new QGIS project and select the `edge` layer. Then in layer preferences define a symbology that visualizes one of the computed index values - e.g. `index_bike_ft` for *bikeability* (`_ft`: bikeability in forward-direction of each segment). Please note that from version 1.0 onwards, an index value of `0` refers to unsuitable infrastructure, whereas `1` represents well suited infrastructure.
+- It gives you full control over the OSM extract (date, bounding box, completeness).
+- It avoids Overpass API timeouts for large or complex areas.
+- It allows you to pre-process or enrich the OSM data before running the assessment.
 
-This is an exemplary visualization of *bikeability* for Salzburg, Austria:
+**Step 1 - Download an OSM extract for your area**
 
-![Bikeability result for Salzburg, Austria](https://user-images.githubusercontent.com/24413180/229191339-7271e4ac-5a9b-4c12-ad02-dd3909215623.png)
+Download a `.osm.pbf` file for your city or region from one of these sources:
 
-#### How to proceed?
+- [Geofabrik India extracts](https://download.geofabrik.de/asia/india.html) - state-level and subregion extracts
+- [BBBike extracts](https://extract.bbbike.org/) - custom bounding-box extracts for any city
 
-Most likely, you want to execute an analysis for a specific area of your interest - please see the [instructions in the wiki](https://github.com/plus-mobilitylab/netascore/wiki/How-to-run-the-project-in-a-Docker-environment#run-netascore-for-your-own-area-of-interest) for how to achieve this with just changing one line in the settings file.
-If you need more detailled instructions or want to know more about the project, please consolidate the [wiki](https://github.com/plus-mobilitylab/netascore/wiki).
+For a specific city boundary, you can clip the state extract using `osmium`:
 
-### Running NetAScore locally (without Docker)
+```bash
+osmium extract --bbox=<min_lon,min_lat,max_lon,max_lat> india-latest.osm.pbf -o my_city.osm.pbf
+```
 
-For running NetAScore without Docker you need several software packages and Python libraries installed on your machine. You find all details in the section ["How to run the project"](https://github.com/plus-mobilitylab/netascore/wiki/How-to-run-the-project).
+**Step 2 - Configure `settings_osm_file.yml`**
+
+Edit `settings_osm_file.yml` and set the path to your OSM file:
+
+```yaml
+osm_file: "data/my_city.osm.pbf"
+```
+
+Adjust the output filename and any other parameters as needed.
+
+**Step 3 - Run NetAScore**
+
+```bash
+docker compose run netascore data/settings_osm_file.yml
+```
+
+Or, if running locally with Python, pass the settings file explicitly:
+
+```bash
+python generate_index.py data/settings_osm_file.yml
+```
+
+> **Tip:** For large metros such as Delhi or Mumbai, clip to a district or planning zone before processing to keep memory usage and runtime manageable.
+
+---
+
+## Shade Coverage (Optional)
+
+This adaptation adds **`shade_coverage`** as an optional indicator - tree canopy and overhead shade are among the most significant factors for walking and cycling willingness in India's climate.
+
+**Data source:** [Meta/WRI 1m Global Canopy Height Maps](https://gee-community-catalog.org/projects/meta_trees/) (Tolan et al. 2024), available free via Google Earth Engine.
+
+**How it works:** For each road segment, pixels from the canopy height raster within a 10 m buffer are scored on a height-weighted curve (0 m → 0.0, ≥18 m → 1.0) and averaged to produce a segment-level shade score in [0, 1].
+
+**To enable it:**
+
+1. Export the canopy height raster for your city from GEE:
+
+```javascript
+var canopy = ee.ImageCollection("projects/sat-io/open-datasets/facebook/meta-canopy-height")
+               .mosaic().clip(city_geometry);
+Export.image.toDrive({
+  image: canopy,
+  description: "my_city_canopy_height",
+  scale: 1,
+  crs: "EPSG:4326",
+  maxPixels: 1e13,
+  fileFormat: "GeoTIFF"
+});
+```
+
+2. Place the exported `.tif` in `data/` and add to your settings file:
+
+```yaml
+optional:
+  shade_coverage:
+    filename: my_city_canopy_height.tif
+    srid: 4326
+```
+
+3. Use the India-adapted mode profiles which include `shade_coverage` pre-weighted:
+
+```yaml
+profiles:
+  - profile_name: walk_india
+    filename: profile_walk_india.yml
+    filter_access_walk: True
+  - profile_name: bike_india
+    filename: profile_bike_india.yml
+    filter_access_bike: True
+```
+
+**Citation:**
+> Tolan, J., Yang, H.I., Nosarzewski, B., et al. (2024). Very high resolution canopy height maps from RGB imagery using self-supervised vision transformer and convolutional decoder trained on aerial lidar. *Remote Sensing of Environment*, 300, 113888.
+
+---
+
+## India-adapted Mode Profiles
+
+This adaptation includes two MAHP-calibrated mode profiles derived from a structured expert survey (KoboToolbox, n=25–35, urban planning practitioners across Indian cities):
+
+| Profile file | Mode | Key differences from default |
+|---|---|---|
+| `profile_walk_india.yml` | Walking | Crossings (rank 2), path width (rank 3), shade (rank 5); water bodies deprioritised |
+| `profile_bike_india.yml` | Cycling | Surface quality is rank 1; cycling infrastructure drops to rank 5 (OSM coverage gap) |
+
+See [`SOW_CONTEXT.md`](SOW_CONTEXT.md) for full methodology and weight derivation details.
+
+---
+
+## What the output contains
+
+After a successful run, a `data/` subdirectory will be created. The assessed network is stored as a GeoPackage (`.gpkg`) file. It includes:
+
+| Column | Description |
+|---|---|
+| `index_bike_ft` | Bikeability score, forward direction (0 = unsuitable, 1 = well-suited) |
+| `index_bike_tf` | Bikeability score, reverse direction |
+| `bikeability` | Segment-level bikeability: `max(index_bike_ft, index_bike_tf)` |
+| `index_walk_ft` | Walkability score, forward direction |
+| `index_walk_tf` | Walkability score, reverse direction |
+| `walkability` | Segment-level walkability: `max(index_walk_ft, index_walk_tf)` |
+
+`ft` = *from-to* node direction; `tf` = *to-from* node direction.
+
+> **Bikeability score:** The reported per-segment bikeability is derived as `max(index_bike_ft, index_bike_tf)` - the better of the two directional scores. This reflects that a cyclist can travel in whichever direction is more suitable along a segment, making the maximum the appropriate summary statistic for segment-level analyses and mapping.
+
+> **Walkability score:** The reported per-segment walkability is derived as `max(index_walk_ft, index_walk_tf)` - the better of the two directional scores.
+
+### Visualising results in QGIS
+
+NetAScore does not include a built-in visualisation module. To view results:
+
+1. Install [QGIS](https://qgis.org) (free and open-source).
+2. Drag and drop the `.gpkg` file into a new QGIS project.
+3. Select the `edge` layer.
+4. In layer properties, define a graduated colour symbology on `bikeability` or `walkability`.
+
+A value of `0` means the segment is assessed as unsuitable; `1` means well-suited infrastructure.
+
+---
+
+## Running NetAScore locally (without Docker)
+
+For running NetAScore without Docker, you need several software packages and Python libraries. Full instructions are in the [wiki](https://github.com/plus-mobilitylab/netascore/wiki/How-to-run-the-project).
 
 **NetAScore uses the following technologies:**
 
-- python 3
+- Python 3
 - PostgreSQL with PostGIS extension
 - Docker (optional)
-- psql
-- ogr2ogr
-- osm2pgsql
-- raster2pgsql
-- [several python libraries](../main/requirements.txt)
+- psql, ogr2ogr, osm2pgsql, raster2pgsql
+- [Several Python libraries](requirements.txt)
+
+---
+
+## More information
+
+Full documentation is available in the **[NetAScore wiki](https://github.com/plus-mobilitylab/netascore/wiki)**:
+
+- [About NetAScore](https://github.com/plus-mobilitylab/netascore/wiki)
+- [Quickstart Guide](https://github.com/plus-mobilitylab/netascore/wiki/Quickstart%E2%80%90Guide)
+- [The Workflow](https://github.com/plus-mobilitylab/netascore/wiki/The-workflow)
+- [Running in Docker](https://github.com/plus-mobilitylab/netascore/wiki/How-to-run-the-project-in-a-Docker-environment)
+- [Running with Python](https://github.com/plus-mobilitylab/netascore/wiki/Run-NetAScore-manually-with-Python)
+- [Attributes & Indicators](https://github.com/plus-mobilitylab/netascore/wiki/Attributes-and-Indicators)
+- [Attribute derivation from OSM](https://github.com/plus-mobilitylab/netascore/wiki/Attribute-derivation-from-OSM)
+- [Configuration of Settings](https://github.com/plus-mobilitylab/netascore/wiki/Configuration-of-the-settings)
+- [Requirements and Limitations](https://github.com/plus-mobilitylab/netascore/wiki/Requirements-and-Limitations)
+- [Credits and License](https://github.com/plus-mobilitylab/netascore/wiki/Credits-and-license)
+
+Example output files are available at [doi.org/10.5281/zenodo.10886961](https://doi.org/10.5281/zenodo.10886961).
+
+---
+
+## Contributing
+
+Contributions to improve this India adaptation are very welcome - particularly around:
+
+- Refined indicator weights reflecting Indian road conditions
+- Validation studies for Indian cities
+- Guidance on integrating municipal GIS data (e.g. from Smart Cities Mission portals)
+
+See the [contribution guide](https://github.com/plus-mobilitylab/netascore/wiki/How-to-contribute) for details.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
+
+The upstream NetAScore project is developed by the [PLUS Mobility Lab](https://github.com/plus-mobilitylab), University of Salzburg, and is also MIT licensed.

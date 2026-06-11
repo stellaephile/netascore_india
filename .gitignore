@@ -1,6 +1,12 @@
 # exclude data directory
 data/*
 
+
+*.geojson
+*.gpkg
+*.qmd
+
+
 # exclude VSCode files
 .vscode/*
 
