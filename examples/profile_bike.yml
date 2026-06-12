@@ -13,7 +13,7 @@ weights:
   max_speed_greatest: NULL
   parking: 0.1
   pavement: 0.1
-  width: NULL
+  width: 0.05
   gradient: 0.1
   number_lanes: NULL
   facilities: NULL
@@ -116,12 +116,18 @@ indicator_mapping:
       cobble: 0
   
   - indicator: width
-    classes:
-      g5: 1
-      g4: 0.9
-      g3: 0.85
-      g2: 0.5
-      ge0: 0
+    # Integer class mapping (0–4) based on total ROW.
+    # Class 0 (<5 m): no space for NMT alongside traffic — very poor
+    # Class 1 (5–10 m): minimal shoulder, below IRC 11 minimum — poor
+    # Class 2 (10–20 m): IRC 11 Type B painted lane feasible — moderate
+    # Class 3 (20–35 m): IRC 11 Type A segregated track feasible — good
+    # Class 4 (>35 m): full bidirectional cycle track feasible — excellent
+    mapping:
+      0: 0.1
+      1: 0.35
+      2: 0.65
+      3: 0.85
+      4: 1.0
   
   - indicator: gradient
     mapping:

@@ -13,7 +13,7 @@ weights:
   max_speed_greatest: 0.3
   parking: NULL
   pavement: NULL
-  width: NULL
+  width: 0.05
   gradient: 0.3
   number_lanes: 0.1
   facilities: 0.3
@@ -103,12 +103,18 @@ indicator_mapping:
       "cobble": 0
   
   - indicator: width
-    classes:
-      g5: 1
-      g4: 0.9
-      g3: 0.85
-      g2: 0.5
-      ge0: 0
+    # Integer class mapping (0–4) based on total ROW.
+    # Class 0 (<5 m): below any IRC 103 minimum — no footpath possible
+    # Class 1 (5–10 m): IRC 103 residential footpath theoretically fits but rarely achieved
+    # Class 2 (10–20 m): IRC 103 residential standard footpath (1.8 m + MUZ) feasible
+    # Class 3 (20–35 m): IRC 103 commercial standard footpath (2.5 m + MUZ) feasible
+    # Class 4 (>35 m): full three-zone high-intensity footpath or pedestrian promenade
+    mapping:
+      0: 0.05
+      1: 0.25
+      2: 0.60
+      3: 0.85
+      4: 1.0
   
   - indicator: gradient
     mapping:

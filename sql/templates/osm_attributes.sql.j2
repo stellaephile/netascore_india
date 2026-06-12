@@ -720,7 +720,20 @@ ALTER TABLE network_edge_attributes DROP COLUMN IF EXISTS width;
 DROP TABLE IF EXISTS network_edge_attributes_tmp;
 CREATE TABLE network_edge_attributes_tmp AS (
     SELECT a.*,
-           CASE WHEN b.width >= 0.4 AND b.width <= 100 THEN round(b.width, 2) END::numeric AS width
+           -- Convert raw metres to ROW width class (IRC 11 / IRC 103 breakpoints)
+           -- Class 0: < 5 m   (no NMT space feasible)
+           -- Class 1: 5–10 m  (minimal; IRC 103 residential footpath barely possible)
+           -- Class 2: 10–20 m (IRC 103 residential footpath + IRC 11 painted cycle lane feasible)
+           -- Class 3: 20–35 m (IRC 103 commercial footpath + IRC 11 segregated track feasible)
+           -- Class 4: > 35 m  (full dual-side NMT infrastructure feasible)
+           CASE
+               WHEN b.width IS NULL OR b.width < 0.4 OR b.width > 100 THEN NULL
+               WHEN b.width < 5  THEN 0
+               WHEN b.width < 10 THEN 1
+               WHEN b.width < 20 THEN 2
+               WHEN b.width < 35 THEN 3
+               ELSE 4
+           END::integer AS width
     FROM network_edge_attributes a
         LEFT JOIN width b USING (edge_id)
 );
@@ -1135,7 +1148,7 @@ ALTER TABLE network_edge_attributes
     ADD COLUMN IF NOT EXISTS parking_ft varchar,
     ADD COLUMN IF NOT EXISTS parking_tf varchar,
     ADD COLUMN IF NOT EXISTS pavement varchar,
-    ADD COLUMN IF NOT EXISTS width numeric,
+    ADD COLUMN IF NOT EXISTS width integer,
     ADD COLUMN IF NOT EXISTS gradient_ft numeric,
     ADD COLUMN IF NOT EXISTS gradient_tf numeric,
     ADD COLUMN IF NOT EXISTS number_lanes_ft numeric,

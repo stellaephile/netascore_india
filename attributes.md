@@ -106,4 +106,20 @@ Describes the occurrence of water bodies within a 30 meters buffer: `true`, `fal
 
 ### width
 
-Describes the width of a road segment in meters.
+Describes the width class of a road segment derived from the OSM `width` tag after cleaning.
+**Represents total Right-of-Way (ROW) or shared carriageway width — not the width of any
+dedicated footpath or cycle track.**
+
+| Class | Total ROW       | Walking feasibility (IRC 103)                            | Cycling feasibility (IRC 11)                          |
+|-------|----------------|----------------------------------------------------------|-------------------------------------------------------|
+| 0     | < 5 m           | No footpath possible within ROW                          | No dedicated space; cyclists mix with all traffic     |
+| 1     | 5 – 10 m        | IRC 103 residential footpath theoretical but rarely achieved | Below IRC 11 minimum (2.0 m) for dedicated track  |
+| 2     | 10 – 20 m       | IRC 103 residential footpath (1.8 m clear zone) feasible | IRC 11 Type B painted lane (2.0 m) alongside carriageway |
+| 3     | 20 – 35 m       | IRC 103 commercial footpath (2.5 m zone) feasible         | IRC 11 Type A segregated track (2.5 m) feasible      |
+| 4     | > 35 m          | Full three-zone high-intensity footpath or promenade      | Bidirectional cycle track (3.0–3.5 m) with buffer    |
+
+Width is used as a **proxy** for the likely available space for walking and cycling: wider ROW
+correlates with greater feasibility of IRC-compliant footpath (IRC 103:2012) and cycle track
+(IRC 11:1962, amended 2022) provision. It is a **non-directional** indicator (no `ft`/`tf` suffix).
+Segments with no OSM `width` tag will have a NULL value and are reflected in the
+`index_<mode>_*_robustness` output column.
