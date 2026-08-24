@@ -1,20 +1,29 @@
 -- =============================================================================
 -- Attribute: shade_coverage
--- Source:    Meta/WRI 1m Global Canopy Height (Tolan et al. 2024)
--- Logic:     For each edge, buffer 10 m → dump pixels via ST_PixelAsPoints →
---            apply height-weighted scoring curve → AVG across all pixels.
---            Result is in [0, 1].
+-- Source:    Meta/WRI Global Canopy Height (Tolan et al. 2024)
+-- Logic:     Sample the canopy raster at points spaced <= 10 m along each edge,
+--            apply the height-weighted scoring curve to each sample, then AVG
+--            the per-sample scores. Result is in [0, 1].
+--
+--            This along-edge sampling replaces the earlier 10 m-buffer pixel
+--            clip (ST_PixelAsPoints), which was tuned for the native 1 m raster
+--            and severely under-samples coarser exports (e.g. ~30 m GEE tiles):
+--            a 10 m buffer often contained no 30 m pixel centroid at all, so
+--            most edges silently scored 0. Point sampling along the line always
+--            hits the raster regardless of pixel size, and each sample counts
+--            equally so shade density along the edge drives the average.
 --
 -- Scoring curve (concave — calibrated to Indian urban street trees):
---   0  ≤ h < 3m   → 0.00   (no canopy / shrubs / saplings — no meaningful shade)
---   3  ≤ h < 8m   → 0.30 + (h-3)  × 0.08   [0.30 – 0.70]  (young street trees)
---   8  ≤ h < 12m  → 0.70 + (h-8)  × 0.05   [0.70 – 0.90]  (mature: neem, peepal)
---   12 ≤ h < 18m  → 0.90 + (h-12) × 0.0167 [0.90 – 1.00]  (excellent canopy)
---   ≥ 18m         → 1.00   (rain tree / banyan — full shade, capped)
+--   0   ≤ h < 1.5m → 0.00   (below pedestrian eye/shoulder height — no shade)
+--   1.5 ≤ h < 3m   → (h-1.5) × 0.1333     [0.00 – 0.20]  (pruned/hedge-trained; partial lateral shade)
+--   3   ≤ h < 8m   → 0.20 + (h-3)  × 0.10   [0.20 – 0.70]  (young street trees)
+--   8   ≤ h < 12m  → 0.70 + (h-8)  × 0.05   [0.70 – 0.90]  (mature: neem, peepal)
+--   12  ≤ h < 18m  → 0.90 + (h-12) × 0.0167 [0.90 – 1.00]  (excellent canopy)
+--   ≥ 18m          → 1.00   (rain tree / banyan — full shade, capped)
 --
--- Note: pixel value 0 = no canopy (valid data, not NoData).
---       All pixels inside the buffer contribute to the average (denominator
---       includes zeros), so both density and height drive the final score.
+-- Note: raster value 0 = no canopy (valid data, not NoData). Sample points that
+--       fall outside raster coverage return NULL and are scored 0 (no shade),
+--       so edges partly outside the canopy extent are handled gracefully.
 -- =============================================================================
 
 ALTER TABLE {{ edge_table | sqlsafe }}
@@ -22,13 +31,11 @@ ALTER TABLE {{ edge_table | sqlsafe }}
 
 -- network_edge_attributes holds only edge_id; geometry lives on network_edge.
 --
--- CRS handling: edges are in the target SRID (metric, e.g. UTM 32643).
--- The raster may be in a different CRS (commonly 4326 from GEE exports).
--- Strategy:
---   1. Buffer edge in metres (native UTM) → accurate 10 m corridor
---   2. ST_Transform the buffer to the raster SRID for all spatial raster ops
---   3. Pixel geometries come back in raster CRS; compare against raster-CRS buffer
--- This avoids reprojecting the raster and works regardless of raster CRS.
+-- CRS handling: edges are in the target SRID (metric, e.g. UTM 32643); the
+-- raster may be in a different CRS (commonly 4326 from GEE exports). Sample
+-- spacing is applied in the edge's native metric CRS (ST_Segmentize uses the
+-- geometry's units → 10 m), then each point is transformed to the raster CRS
+-- for ST_Value. This avoids reprojecting the raster and works for any raster CRS.
 
 UPDATE {{ edge_table | sqlsafe }} ea
 SET shade_coverage = sub.score
@@ -37,38 +44,36 @@ FROM (
         ne.edge_id,
         AVG(
             CASE
-                WHEN pixels.val < 3   THEN 0.0
-                WHEN pixels.val < 8   THEN 0.30 + (pixels.val - 3)  * (0.40 / 5.0)
-                WHEN pixels.val < 12  THEN 0.70 + (pixels.val - 8)  * (0.20 / 4.0)
-                WHEN pixels.val < 18  THEN 0.90 + (pixels.val - 12) * (0.10 / 6.0)
-                ELSE                       1.0
+                WHEN v.h IS NULL OR v.h < 1.5 THEN 0.0
+                WHEN v.h < 3   THEN 0.00 + (v.h - 1.5) * (0.20 / 1.5)
+                WHEN v.h < 8   THEN 0.20 + (v.h - 3)   * (0.50 / 5.0)
+                WHEN v.h < 12  THEN 0.70 + (v.h - 8)   * (0.20 / 4.0)
+                WHEN v.h < 18  THEN 0.90 + (v.h - 12)  * (0.10 / 6.0)
+                ELSE                1.0
             END
         ) AS score
     FROM {{ network_edge_table | sqlsafe }} ne
-    -- Pre-compute both the metric buffer (for accurate 10 m distance)
-    -- and the raster-CRS buffer (for all spatial raster operations)
+    -- sample points every <= 10 m along the edge (Segmentize caps segment
+    -- length, DumpPoints extracts the resulting vertices), in the raster CRS.
+    -- Short edges (< 10 m) yield their two endpoints, so every edge is sampled.
     CROSS JOIN LATERAL (
-        SELECT
-            ST_Buffer(ne.geom, 10) AS buf_metric,
-            ST_Transform(
-                ST_Buffer(ne.geom, 10),
-                (SELECT ST_SRID(rast) FROM {{ schema | sqlsafe }}.shade_coverage_raster LIMIT 1)
-            ) AS buf_raster_crs
-    ) AS b
-    JOIN {{ schema | sqlsafe }}.shade_coverage_raster r
-      ON ST_Intersects(r.rast, b.buf_raster_crs)
-    CROSS JOIN LATERAL (
-        SELECT (ST_PixelAsPoints(
-                    ST_Clip(r.rast, 1, b.buf_raster_crs, 0, TRUE)
-                )).*
-    ) AS pixels(geom, val, x, y)
-    -- Pixel centroids are in raster CRS; compare against raster-CRS buffer
-    WHERE ST_Within(pixels.geom, b.buf_raster_crs)
+        SELECT ST_Transform((dp).geom,
+                   (SELECT ST_SRID(rast) FROM {{ schema | sqlsafe }}.shade_coverage_raster LIMIT 1)
+               ) AS pt
+        FROM ST_DumpPoints(ST_Segmentize(ne.geom, 10)) AS dp
+    ) pts
+    -- canopy height at each sample point; NULL when outside raster -> scored 0
+    LEFT JOIN LATERAL (
+        SELECT ST_Value(r.rast, 1, pts.pt) AS h
+        FROM {{ schema | sqlsafe }}.shade_coverage_raster r
+        WHERE ST_Intersects(r.rast, pts.pt)
+        LIMIT 1
+    ) v ON TRUE
     GROUP BY ne.edge_id
 ) sub
 WHERE ea.edge_id = sub.edge_id;
 
--- Edges with no raster coverage get 0 (no canopy data → assume no shade)
+-- Edges with no geometry / no samples get 0 (no canopy data → assume no shade)
 UPDATE {{ edge_table | sqlsafe }}
 SET shade_coverage = 0
 WHERE shade_coverage IS NULL;

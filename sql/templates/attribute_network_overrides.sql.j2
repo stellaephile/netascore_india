@@ -1,0 +1,40 @@
+-- =============================================================================
+-- Attribute overrides from the QC'ed road network
+-- Source table: <schema_data>.network_overrides  (osm_id, width, road_category)
+--               created by NetworkOverridesImporter from a CSV generated with
+--               scripts/make_network_overrides.py (QC traffic layer conflated
+--               onto OSM ways - see scripts/conflate_width.py).
+--
+-- width:  QC width class (1 = <10 m, 2 = 10-20 m, 3 = 20-35 m, 4 = >35 m),
+--         measured by image analysts from high-resolution satellite imagery.
+--         IMPORTANT: this REPLACES the OSM-derived width column entirely -
+--         the column changes semantics from metres to class encoding, so any
+--         OSM metre values on non-overridden edges are cleared to NULL. Mode
+--         profiles must map width classes 1-4 (see data/profile_*.yml).
+--
+-- road_category: QC road classification translated to NetAScore vocabulary
+--         (primary/secondary/residential/service/calmed/no_mit/path).
+--         Only overridden where a QC value exists; the OSM-derived category
+--         is kept elsewhere (same vocabulary, so no semantic change).
+-- =============================================================================
+
+-- width: switch column semantics to QC class encoding
+UPDATE {{ schema_network | sqlsafe }}.network_edge_attributes
+SET width = NULL;
+
+UPDATE {{ schema_network | sqlsafe }}.network_edge_attributes a
+SET width = o.width
+FROM {{ schema_network | sqlsafe }}.network_edge e,
+     {{ schema_data | sqlsafe }}.network_overrides o
+WHERE a.edge_id = e.edge_id
+  AND e.osm_id = o.osm_id
+  AND o.width IS NOT NULL;
+
+-- road_category: override only where QC provides a classification
+UPDATE {{ schema_network | sqlsafe }}.network_edge_attributes a
+SET road_category = o.road_category
+FROM {{ schema_network | sqlsafe }}.network_edge e,
+     {{ schema_data | sqlsafe }}.network_overrides o
+WHERE a.edge_id = e.edge_id
+  AND e.osm_id = o.osm_id
+  AND o.road_category IS NOT NULL;

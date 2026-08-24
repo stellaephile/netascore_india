@@ -24,6 +24,30 @@ CREATE INDEX export_edge_from_node_idx ON export_edge (from_node);
 CREATE INDEX export_edge_to_node_idx ON export_edge (to_node);
 
 -- ---------------------------------------------------------------------------------------------------------------------
+-- final per-mode indices: walkability / bikeability = best of both directions
+-- ---------------------------------------------------------------------------------------------------------------------
+-- GREATEST(ft, tf) takes the more favourable travel direction. For walk the two
+-- are identical (walk's gradient mapping is up/down symmetric); for bike they
+-- differ (asymmetric gradient) and this picks the easier (downhill) direction.
+-- Both-NULL (mode-inaccessible edges) stays NULL. Columns are added only when the
+-- corresponding profile was run, so walk-only / bike-only runs do not fail.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = '{{ schema_network | sqlsafe }}'
+                 AND table_name = 'export_edge' AND column_name = 'index_walk_ft') THEN
+        ALTER TABLE export_edge ADD COLUMN IF NOT EXISTS walkability double precision;
+        UPDATE export_edge SET walkability = GREATEST(index_walk_ft, index_walk_tf);
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = '{{ schema_network | sqlsafe }}'
+                 AND table_name = 'export_edge' AND column_name = 'index_bike_ft') THEN
+        ALTER TABLE export_edge ADD COLUMN IF NOT EXISTS bikeability double precision;
+        UPDATE export_edge SET bikeability = GREATEST(index_bike_ft, index_bike_tf);
+    END IF;
+END $$;
+
+-- ---------------------------------------------------------------------------------------------------------------------
 
 DROP TABLE IF EXISTS export_node;
 CREATE TABLE export_node AS (
