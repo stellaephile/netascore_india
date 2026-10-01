@@ -58,7 +58,8 @@ CREATE TABLE network_edge_index_tmp AS (
             b.buildings, {{ buildings }},
             b.greenness, {{ greenness }},
             b.water, {{ water }},
-            b.noise, {{ noise }}
+            b.noise, {{ noise }},
+            b.shade_coverage::numeric, {{ shade_coverage }}
         ) ft,
         LATERAL calculate_index(
             b.bicycle_infrastructure_tf, {{ bicycle_infrastructure }},
@@ -77,7 +78,8 @@ CREATE TABLE network_edge_index_tmp AS (
             b.buildings, {{ buildings }},
             b.greenness, {{ greenness }},
             b.water, {{ water }},
-            b.noise, {{ noise }}
+            b.noise, {{ noise }},
+            b.shade_coverage::numeric, {{ shade_coverage }}
         ) tf
     WHERE 
         false
